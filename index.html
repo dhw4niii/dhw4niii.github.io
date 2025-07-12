@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dhanista's Art Gallery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+
+    <style>
+        /* Custom Font Integration */
+        @font-face {
+            font-family: 'Aricena';
+            src: url('fonts/Aricena-Regular.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'YOU';
+            src: url('fonts/YOU.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        /* This defines your custom greek font. Make sure arial-greek-regular.ttf is in a /fonts/ directory. */
+        @font-face {
+            font-family: 'ArialGreek';
+            src: url('fonts/arial-greek-regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+        
+        @font-face {
+            font-family: 'Ruigslay';
+            src: url('fonts/Ruigslay.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        /* Base body font with animated background */
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.5s ease;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-color: #000000;
+            /* Removed animation: pulse-dots to stop breathing effect */
+            background-image: radial-gradient(circle, transparent calc(var(--dot-size, 3px) - 1px), rgba(255, 255, 255, 0.15) calc(var(--dot-size, 3px) - 1px), rgba(255, 255, 255, 0.15) var(--dot-size, 3px), transparent var(--dot-size, 3px));
+            background-size: var(--dot-spacing, 25px) var(--dot-spacing, 25px);
+        }
+        
+        /* Removed @keyframes pulse-dots to stop breathing effect */
+
+        /* Custom font classes */
+        .font-aricena {
+            font-family: 'Aricena', sans-serif;
+        }
+
+        .font-you {
+            font-family: 'YOU', sans-serif;
+        }
+
+        .font-greek-dynamic {
+            font-family: 'ArialGreek', sans-serif;
+        }
+
+        .font-ruigslay {
+            font-family: 'Ruigslay', sans-serif;
+        }
+
+        /* --- REFINED GLASS UI --- */
+        .glass-effect {
+            position: relative;
+            overflow: hidden;
+            background-color: rgba(20, 20, 20, 0.45); /* Darker, slightly more opaque base */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+            border-radius: 24px;
+            transition: background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease, backdrop-filter 0.5s ease;
+        }
+        
+        /* Header scroll effect */
+        #main-header.scrolled nav {
+            background-color: rgba(10, 10, 10, 0.6);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+        }
+
+        /* Interactive glow effect for specific glass panels */
+        .interactive-glass::before {
+            content: '';
+            position: absolute;
+            top: var(--mouse-y-glass, -150px);
+            left: var(--mouse-x-glass, -150px);
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .interactive-glass:hover::before {
+            opacity: 1;
+        }
+
+        /* Shimmer effect for lazy loading */
+        .shimmer {
+            animation: shimmer 1.5s infinite;
+            background: linear-gradient(to right, #333 8%, #444 18%, #333 33%);
+            background-size: 1000px 100%;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        /* Scroll reveal effect classes */
+        .scroll-reveal-item {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .scroll-reveal-item.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- GALLERY REDESIGN STYLES --- */
+        .art-image-container {
+            position: relative;
+            width: 100%;
+            padding-top: 100%;
+            overflow: hidden;
+            border-radius: 0.75rem;
+        }
+
+        .art-image-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        
+        .shimmer-image-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, #333 8%, #444 18%, #333 33%);
+            background-size: 1000px 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 12px;
+        }
+
+        .art-image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 60%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 1rem;
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+        }
+
+        .overlay-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 0.25rem;
+            transform: translateY(1.25rem);
+            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .overlay-date {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.8);
+            transform: translateY(1.25rem);
+            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) 0.05s;
+        }
+
+        .art-card:hover .art-image-overlay {
+            opacity: 1;
+        }
+        .art-card:hover .art-image-container img {
+            transform: scale(1.1);
+        }
+        .art-card:hover .overlay-title,
+        .art-card:hover .overlay-date {
+            transform: translateY(0);
+        }
+
+        .gallery-card {
+            background-color: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border-radius: 0.75rem;
+        }
+
+        .gallery-card:hover {
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            transform: translateY(-5px);
+        }
+
+        /* --- DYNAMIC HERO STYLES --- */
+        #hero-sticky-container {
+            -webkit-backdrop-filter: blur(0px);
+            backdrop-filter: blur(0px);
+            transition: backdrop-filter 0.3s ease;
+        }
+
+        .floating-word {
+            position: absolute;
+            opacity: 0;
+            will-change: opacity, transform;
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+        }
+        
+        #hero-background {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            filter: brightness(0.6);
+        }
+        
+        .blur-effect {
+            filter: blur(8px);
+            transition: filter 0.3s ease-out;
+            pointer-events: none;
+        }
+
+        .modal-content-initial {
+            opacity: 0;
+            transform: scale(0.7);
+        }
+        .modal-content-active {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .modal-grid-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        /* Default grid for smaller screens (mobile and tablet) */
+        @media (min-width: 1024px) {
+            .modal-grid-layout { grid-template-columns: 2fr 1fr; }
+        }
+
+        /* --- MOBILE MENU IMPROVEMENTS --- */
+        #mobile-menu-overlay {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0s linear 0.4s;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        #mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.4s ease;
+        }
+        #mobile-menu-overlay .menu-item {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        #mobile-menu-overlay.active .menu-item {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        #mobile-menu-overlay.active .menu-item:nth-child(1) { transition-delay: 0.1s; }
+        #mobile-menu-overlay.active .menu-item:nth-child(2) { transition-delay: 0.2s; }
+        #mobile-menu-overlay.active .menu-item:nth-child(3) { transition-delay: 0.3s; }
+        #mobile-menu-overlay.active #menu-quote { transition-delay: 0.4s; }
+
+        /* --- TILT EFFECT STYLES --- */
+        #contact-card {
+             will-change: transform;
+             transition: transform 0.1s ease-out;
+        }
+
+        /* === LIQUID GLASS BUTTON (IRIDESCENT EFFECT) === */
+        .liquid-glass-button {
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            color: white;
+            font-weight: 600;
+            border-radius: 9999px;
+            background-color: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .liquid-glass-button::after {
+            content: '';
+            position: absolute;
+            top: var(--mouse-y, -50%);
+            left: var(--mouse-x, -50%);
+            width: 200%;
+            padding-top: 200%;
+            transform: translate(-50%, -50%);
+            background: radial-gradient( circle, hsla(180, 100%, 75%, 0.3) 0%, hsla(240, 100%, 75%, 0.25) 10%, hsla(300, 100%, 75%, 0.2) 20%, hsla(0, 100%, 75%, 0.15) 30%, transparent 50% );
+            filter: blur(30px);
+            mix-blend-mode: color-dodge;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: -1;
+        }
+
+        .liquid-glass-button:hover {
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+            transform: translateY(-3px);
+        }
+
+        .liquid-glass-button:hover::after {
+            opacity: 1;
+        }
+        
+        .liquid-glass-button:active {
+            transform: translateY(0);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Style for the artist's signature */
+        .artist-signature {
+            filter: invert(1);
+        }
+
+        /* --- MODAL MOBILE UI REDESIGN --- */
+        @media (max-width: 767px) {
+            #art-modal {
+                align-items: center; /* Center the modal content vertically for better spacing */
+                padding: 1rem; /* Add some padding around the modal */
+                overflow-y: auto; /* Allow scrolling within the modal overlay */
+                flex-direction: column; /* Stack modal content wrapper and mobile button vertically */
+                justify-content: flex-start; /* Align content to the top */
+            }
+
+            #modal-content-wrapper {
+                max-width: 100%; /* Take full width on mobile */
+                width: 100%; /* Ensure it takes full width */
+                margin-top: 1rem; /* Adjusted margin from the top */
+                margin-bottom: 0; /* Remove bottom margin here, mobile button will add its own */
+                padding: 1rem; /* Smaller padding for content */
+                border-radius: 1.5rem; /* Slightly smaller border radius for mobile */
+                max-height: calc(100vh - 4rem); /* Adjusted max-height for in-flow button */
+                overflow-y: auto; /* Allow content inside modal to scroll */
+                -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            }
+
+            #modal-image {
+                max-height: 45vh; /* Limit image height to prevent it from taking up too much vertical space, adjusted */
+                width: auto; /* Allow width to adjust based on aspect ratio */
+                margin: 0 auto 1rem auto; /* Center image and add bottom margin */
+            }
+
+            /* NEW CLASS: Mobile-specific placement for the close button, outside the modal content */
+            .mobile-modal-close-button {
+                position: relative; /* Make it part of the layout flow within #art-modal */
+                display: block; /* Treat as a block element */
+                width: fit-content; /* Size to content */
+                
+                /* Reset positioning properties from desktop/inline */
+                top: auto;
+                right: auto;
+                bottom: auto;
+                left: auto;
+                transform: none;
+
+                /* Center the button horizontally and add top margin below the modal content */
+                margin: 1.5rem auto 0 auto; /* Positive margin to place it below */
+                
+                /* Visual styles */
+                background-color: rgba(255, 255, 255, 0.15);
+                color: white;
+                font-size: 1.0rem;
+                padding: 0.30rem 1.2rem;
+                height: auto;
+                border-radius: 9999px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                z-index: 10;
+            }
+
+            /* No specific #close-modal styles for mobile needed here as mobile-modal-close-button handles it */
+
+            .modal-grid-layout {
+                grid-template-columns: 1fr; /* Stack elements vertically */
+                gap: 1rem; /* Smaller gap */
+            }
+
+            .modal-grid-layout > div {
+                padding: 0; /* Remove extra padding from modal content divs */
+            }
+
+            #modal-title {
+                font-size: 2.5rem; /* Adjust title size for mobile */
+                margin-bottom: 0.5rem;
+            }
+
+            #modal-description {
+                font-size: 1rem; /* Adjust description size for mobile */
+                margin-bottom: 1rem;
+            }
+
+            .space-y-3 p {
+                font-size: 0.875rem; /* Smaller text for details */
+            }
+
+            #modal-categories {
+                justify-content: center; /* Center categories on mobile */
+            }
+        }
+
+        /* Tablet-specific styles for the modal */
+        @media (min-width: 768px) and (max-width: 1023px) { /* For tablets (e.g., iPad, Samsung Tab) */
+            #art-modal {
+                padding: 2rem; /* More padding for tablets */
+                align-items: center; /* Center vertically */
+                justify-content: center; /* Center horizontally */
+                flex-direction: row; /* Revert to row for tablet layout */
+            }
+
+            #modal-content-wrapper {
+                max-width: 90%; /* Constrain width for tablets */
+                max-height: 90vh; /* Constrain height for tablets */
+                overflow-y: auto; /* Allow scrolling if content overflows */
+                padding: 1.5rem; /* Slightly more padding than mobile */
+                margin-top: 0; /* Reset mobile specific margin */
+            }
+
+            #modal-image {
+                max-height: 50vh; /* Adjust image height for tablets */
+            }
+
+            /* Ensure desktop close button is visible and positioned correctly */
+            #close-modal-desktop {
+                display: block; /* Make sure it's visible */
+                position: absolute;
+                top: 1rem;
+                right: 1rem;
+                font-size: 1rem;
+                padding: 0.5rem 1rem;
+                width: auto;
+                height: auto;
+                background-color: rgba(255, 255, 255, 0.15);
+                color: white;
+                border-radius: 9999px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                z-index: 10;
+            }
+
+            /* Hide mobile close button on tablets */
+            #close-modal-mobile {
+                display: none !important;
+            }
+
+            .modal-grid-layout {
+                grid-template-columns: 1fr; /* Single column for tablets, can be adjusted to 2fr 1fr if desired */
+            }
+        }
+
+        /* Desktop-only styles for the close button and modal layout */
+        @media (min-width: 1024px) { /* Only for desktops */
+            #close-modal-desktop { /* Renamed ID for desktop button */
+                position: absolute; /* Position relative to its parent (#modal-content-wrapper) */
+                top: 1rem; /* 1rem from the top */
+                right: 1rem; /* 1rem from the right */
+                bottom: auto;
+                left: auto;
+                transform: none;
+                font-size: 1rem;
+                padding: 0.5rem 1rem;
+                width: auto;
+                height: auto;
+                background-color: rgba(255, 255, 255, 0.15);
+                color: white;
+                border-radius: 9999px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                z-index: 10;
+                display: block; /* Ensure it's visible on desktop */
+            }
+
+            #close-modal-mobile {
+                display: none !important; /* Ensure mobile button is hidden on desktop */
+            }
+
+            .modal-grid-layout {
+                grid-template-columns: 2fr 1fr; /* Desktop specific grid layout */
+            }
+        }
+
+        /* New class for text glow effect */
+        .text-glow {
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.6), 0 0 20px rgba(255, 255, 255, 0.4);
+        }
+    </style>
+</head>
+<body class="text-gray-100 antialiased">
+    <!-- Header Section -->
+    <header id="main-header" class="w-full py-6 px-4 md:px-8 lg:px-12 fixed top-0 z-50 transition-all duration-300 ease-in-out">
+        <nav class="container mx-auto flex justify-between items-center glass-effect interactive-glass p-4 rounded-full">
+            <a href="#home" class="font-aricena text-2xl font-bold text-white tracking-wide hover:text-gray-300 transition-colors duration-300 relative z-10">
+                Dhanista's Art
+            </a>
+            <ul class="hidden md:flex space-x-2 items-center relative z-10">
+                <li><a href="#gallery" class="nav-link text-lg font-medium text-white hover:text-gray-300 transition-colors duration-300 hover:bg-white/10 px-4 py-2 rounded-full">Gallery</a></li>
+                <li><a href="#about" class="nav-link text-lg font-medium text-white hover:text-gray-300 transition-colors duration-300 hover:bg-white/10 px-4 py-2 rounded-full">About</a></li>
+                <li><a href="#contact" class="nav-link text-lg font-medium text-white hover:text-gray-300 transition-colors duration-300 hover:bg-white/10 px-4 py-2 rounded-full">Contact</a></li>
+            </ul>
+            <div class="flex items-center md:hidden relative z-10">
+                <button id="mobile-menu-button" class="text-white focus:outline-none z-50"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+            </div>
+        </nav>
+        <div id="mobile-menu-overlay" class="fixed inset-0 z-40 flex flex-col items-center justify-center text-center">
+            <button id="close-mobile-menu" class="absolute top-8 right-8 text-white focus:outline-none"><svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            <ul class="flex flex-col space-y-8 text-4xl font-light">
+                <li class="menu-item"><a href="#gallery" class="nav-link text-white hover:text-gray-300">Gallery</a></li>
+                <li class="menu-item"><a href="#about" class="nav-link text-white hover:text-gray-300">About</a></li>
+                <li class="menu-item"><a href="#contact" class="nav-link text-white hover:text-gray-300">Contact</a></li>
+            </ul>
+            <p id="menu-quote" class="menu-item text-white/70 italic mt-16 text-lg">"Art is the way of living."</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content" class="flex-grow pb-12 relative z-20">
+        <!-- === DYNAMIC HERO SECTION === -->
+        <section id="home" class="relative h-[200vh]">
+            <div id="hero-sticky-container" class="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
+                <img id="hero-background" src="assets/hero.svg" alt="background art"
+                onerror="this.onerror=null;this.src='https://placehold.co/1920x1080/000000/FFFFFF?text=Background+Image';">
+                
+                <div id="floating-words-container" class="absolute inset-0 z-0"></div>
+                
+                <div id="hero-content-scaler" class="relative z-10 p-8 md:p-12 max-w-4xl mx-auto text-center">
+                    <h1 id="hero-heading" class="font-ruigslay text-4xl md:text-6xl text-white mb-6 leading-tight">Welcome to the <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-blue-400">Digital Canvas</span></h1>
+                    <p class="text-xl md:text-2xl text-gray-200 mb-8">Showcasing the beautiful intimate art crafted by Dhanista.</p>
+                    <a href="#gallery" class="nav-link inline-block liquid-glass-button px-8 py-4">Explore the Gallery</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gallery Section -->
+        <section id="gallery" class="container mx-auto px-4 md:px-8 lg:px-12 py-16 mb-20">
+            <h2 class="text-5xl font-bold text-center text-white mb-16 scroll-reveal-item font-you text-glow">The Gallery</h2>
+            <div class="flex flex-wrap justify-center gap-4 mb-12 scroll-reveal-item">
+                <button class="filter-btn glass-effect px-6 py-3 rounded-full text-lg text-white hover:bg-white/20 transition-all duration-300 active-filter" data-category="all">All</button>
+                <button class="filter-btn glass-effect px-6 py-3 rounded-full text-lg text-white hover:bg-white/20 transition-all duration-300" data-category="black_white">Black & White</button>
+                <button class="filter-btn glass-effect px-6 py-3 rounded-full text-lg text-white hover:bg-white/20 transition-all duration-300" data-category="colored">Colored</button>
+                <button class="filter-btn glass-effect px-6 py-3 rounded-full text-lg text-white hover:bg-white/20 transition-all duration-300" data-category="portraits">Portraits</button>
+                <button class="filter-btn glass-effect px-6 py-3 rounded-full text-lg text-white hover:bg-white/20 transition-all duration-300" data-category="landscapes">Landscapes</button>
+            </div>
+
+            <div id="art-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                <!-- Art cards will be dynamically inserted here -->
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="container mx-auto px-4 md:px-8 lg:px-12 py-16 mb-20">
+            <h2 class="text-5xl font-bold text-center text-white mb-16 scroll-reveal-item font-you text-glow">About the Artist</h2>
+            <div class="glass-effect interactive-glass p-8 md:p-12 rounded-3xl max-w-5xl mx-auto text-lg text-gray-200 leading-relaxed scroll-reveal-item flex flex-col md:flex-row items-center md:items-start gap-8">
+                <div class="flex flex-col items-center flex-shrink-0 relative z-10">
+                    <div class="w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden border-4 border-white/30 shadow-lg mb-4" oncontextmenu="return false;">
+                        <img src="Author.jpg" alt="Artist's Photo" class="w-full h-full object-cover pointer-events-none">
+                    </div>
+                    <h3 class="font-aricena text-3xl font-bold text-white mb-1">Dhanista</h3>
+                    <p class="text-xl text-gray-300 mb-2">Digital Artist</p>
+                    <img src="assets/signature.png" alt="Dhanista's Signature" class="mt-2 w-40 pointer-events-none artist-signature" onerror="this.style.display='none'">
+                </div>
+                <div class="flex-1 text-center md:text-left relative z-10">
+                    <p class="mb-6">Dhanista is a passionate digital artist who brings imagination to life through the vibrant canvas of the iPad. With a unique blend of traditional artistry and modern digital techniques, their work explores themes of nature, human emotion, and abstract beauty.</p>
+                    <p class="mb-6">Each piece is a journey, meticulously crafted with attention to detail and a deep understanding of color, light, and form. From intricate black and white sketches to breathtaking colored landscapes, Dhanista's art invites viewers into a world of wonder and contemplation.</p>
+                    <p>Inspired by the everyday and the extraordinary, Dhanista continuously pushes the boundaries of digital art, creating pieces that resonate deeply and leave a lasting impression.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="relative py-16 mb-20">
+            <canvas id="contact-background-canvas" class="absolute top-0 left-0 w-full h-full z-0 pointer-events-none"></canvas>
+            <div class="container mx-auto px-4 md:px-8 lg:px-12 relative z-10">
+                <h2 class="text-5xl font-bold text-center text-white mb-16 scroll-reveal-item font-you text-glow">Get in Touch</h2>
+                <div id="contact-card" class="glass-effect interactive-glass p-8 md:p-12 rounded-3xl max-w-2xl mx-auto text-lg text-gray-200 scroll-reveal-item">
+                    <div class="relative z-10">
+                        <p class="mb-6 text-center font-bold">Interested in collaborations, commissions, or just want to say hello? You can reach out directly via:</p>
+                        <div class="flex flex-col sm:flex-row justify-center items-center gap-6">
+                            <a href="mailto:dasdhanista7@gmail.com" class="inline-flex items-center liquid-glass-button px-6 py-3"><svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8m-17 0a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V8z"></path></svg>Email</a>
+                            <a href="https://www.instagram.com/dhw4ni__/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center liquid-glass-button px-6 py-3"><svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>Instagram</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="w-full mt-auto py-8">
+        <div class="container mx-auto px-4 md:px-8 lg:px-12 text-center text-gray-400">
+            <h3 class="font-aricena text-2xl font-bold text-white mb-4">Dhanista's Art</h3>
+            <div class="w-20 h-px bg-white/20 mx-auto mb-6"></div>
+            <div class="text-sm">
+                <p class="mb-2">&copy; 2025 Dhanista's Art. All Rights Reserved.</p>
+                <div class="flex items-center justify-center gap-2">
+                    <span>Designed by SHITIJ HALDER</span>
+                    <a href="mailto:shitijhalder4@gmail.com" class="text-gray-400 hover:text-white transition-colors duration-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8m-17 0a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V8z"></path></svg>
+                        <span class="sr-only">Designer Email</span>
+                    </a>
+                    <a href="https://www.instagram.com/shitijnotop" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-white transition-colors duration-300">
+                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                        <span class="sr-only">Designer Instagram</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Art Modal -->
+    <div id="art-modal" class="fixed inset-0 flex items-center justify-center p-4 z-[100] hidden bg-black bg-opacity-50">
+        <div id="modal-content-wrapper" class="relative glass-effect p-6 rounded-3xl max-w-5xl w-full mx-auto modal-grid-layout transform transition-all duration-300 ease-out modal-content-initial">
+            <!-- Modal Image -->
+            <div class="flex-1 flex items-center justify-center min-h-[300px] lg:min-h-[auto]"><img id="modal-image" src="" alt="Artwork" class="max-w-full max-h-[70vh] rounded-xl shadow-lg object-contain"></div>
+            <!-- Modal Text Content -->
+            <div class="flex-1 text-white flex flex-col justify-center p-4 lg:p-0">
+                <h3 id="modal-title" class="text-4xl font-bold mb-4 text-center lg:text-left"></h3>
+                <p id="modal-description" class="text-lg mb-6 text-gray-200 text-center lg:text-left"></p>
+                
+                <div class="space-y-3 text-center lg:text-left border-t border-white/20 pt-4">
+                    <p id="modal-theme" class="text-md text-gray-300"></p>
+                    <p id="modal-creation-date" class="text-md text-gray-300"></p>
+                    <p id="modal-time-taken" class="text-md text-gray-300"></p>
+                    <p id="modal-app-used" class="text-md text-gray-300"></p>
+                    <p id="modal-wacom" class="text-md text-gray-300"></p>
+                    <p id="modal-dimensions" class="text-md text-gray-300"></p>
+                    <p id="modal-date" class="text-md text-gray-300"></p>
+                </div>
+
+                <div id="modal-categories" class="flex flex-wrap justify-center lg:justify-start gap-2 mt-6"></div>
+            </div>
+            <!-- Close button for Desktop - remains inside modal-content-wrapper -->
+            <button id="close-modal-desktop" class="absolute top-4 right-4 text-white font-bold p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-300 z-10 hidden md:block">Close</button>
+        </div>
+        <!-- Close button for Mobile - placed outside modal-content-wrapper -->
+        <button id="close-modal-mobile" class="mobile-modal-close-button block md:hidden">Close</button>
+    </div>
+
+    <!-- Main Site Scripts -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // =================================================================
+            // --- DOTTED BACKGROUND CONFIGURATION ---
+            // =================================================================
+            const dotBackgroundConfig = {
+                size: 3,
+                spacing: 20
+            };
+            function setupDotBackground(config) {
+                document.documentElement.style.setProperty('--dot-size', `${config.size}px`);
+                document.documentElement.style.setProperty('--dot-spacing', `${config.spacing}px`);
+            }
+            setupDotBackground(dotBackgroundConfig);
+
+            // =================================================================
+            // --- FLOATING WORDS CONFIGURATION ---
+            // =================================================================
+            const floatingWordsConfig = [
+                { text: 'Vision', top: '15%', left: '10%', fontSize: '6vw', color: 'rgba(255, 255, 255, 0.4)', fontFamily: "'ArialGreek', sans-serif", dataSpeed: 0.5 },
+                { text: 'Artistry', top: '30%', left: '70%', fontSize: '8vw', color: 'rgba(255, 255, 255, 0.5)', fontFamily: "'YOU', sans-serif", dataSpeed: 0.8 },
+                { text: 'Muse', top: '10%', left: '50%', fontSize: '8vw', color: 'rgba(255, 255, 255, 0.5)', fontFamily: "'YOU', sans-serif", dataSpeed: 0.8 },
+                { text: 'Rhythm', top: '40%', left: '10%', fontSize: '8vw', color: 'rgba(255, 255, 255, 0.5)', fontFamily: "'Aricena', sans-serif", dataSpeed: 0.8 },
+                { text: 'Essence', top: '50%', left: '50%', fontSize: '8vw', color: 'rgba(255, 255, 255, 0.5)', fontFamily: "'YOU', sans-serif", dataSpeed: 0.8 },
+                { text: 'Passion', top: '70%', left: '20%', fontSize: '7vw', color: 'rgba(255, 255, 255, 0.3)', fontFamily: "'Aricena', sans-serif", dataSpeed: 1.2 },
+                { text: 'Graphics', top: '80%', left: '65%', fontSize: '5vw', color: 'rgba(255, 255, 255, 0.4)', fontFamily: "'Inter', sans-serif", dataSpeed: 0.6 }
+            ];
+
+            function initFloatingWords(config) {
+                const container = document.getElementById('floating-words-container');
+                if (!container) return;
+
+                config.forEach(wordConfig => {
+                    const wordEl = document.createElement('span');
+                    wordEl.classList.add('floating-word');
+                    wordEl.textContent = wordConfig.text;
+                    wordEl.style.top = wordConfig.top;
+                    wordEl.style.left = wordConfig.left;
+                    wordEl.style.fontSize = wordConfig.fontSize;
+                    wordEl.style.color = wordConfig.color;
+                    wordEl.style.fontFamily = wordConfig.fontFamily;
+                    wordEl.dataset.speed = wordConfig.dataSpeed || 1;
+                    container.appendChild(wordEl);
+                });
+            }
+            initFloatingWords(floatingWordsConfig);
+
+            // =================================================================
+            // --- DYNAMIC HERO & OTHER ONLOAD INITIALIZATIONS ---
+            // =================================================================
+            const homeSection = document.getElementById('home');
+            const heroStickyContainer = document.getElementById('hero-sticky-container');
+            const heroContentScaler = document.getElementById('hero-content-scaler');
+            const floatingWords = document.querySelectorAll('.floating-word');
+
+            if (homeSection && heroStickyContainer && heroContentScaler) {
+                 const handleHeroScroll = () => {
+                    const rect = homeSection.getBoundingClientRect();
+                    const scrollAmountInHero = -rect.top;
+                    const animationDistance = window.innerHeight;
+
+                    if (scrollAmountInHero >= 0 && scrollAmountInHero <= animationDistance) {
+                        const progress = scrollAmountInHero / animationDistance;
+                        
+                        requestAnimationFrame(() => {
+                            const easedProgress = Math.sin(progress * Math.PI / 2);
+                            const scale = 1 + easedProgress * 14;
+                            const opacity = 1 - Math.pow(progress, 4);
+                            const blur = progress * 20; 
+                            
+                            heroContentScaler.style.transform = `scale(${scale})`;
+                            heroContentScaler.style.opacity = opacity;
+                            heroStickyContainer.style.backdropFilter = `blur(${blur}px)`;
+                            heroStickyContainer.style.webkitBackdropFilter = `blur(${blur}px)`;
+
+                            let wordsOpacity = 0;
+                            if (progress > 0.25 && progress < 0.85) {
+                                if (progress < 0.45) wordsOpacity = (progress - 0.25) / 0.20;
+                                else if (progress > 0.65) wordsOpacity = 1 - ((progress - 0.65) / 0.20);
+                                else wordsOpacity = 1;
+                            }
+
+                            floatingWords.forEach(word => {
+                                word.style.opacity = Math.max(0, wordsOpacity);
+                                const speed = parseFloat(word.dataset.speed) || 1;
+                                const translateY = -progress * 200 * speed;
+                                word.style.transform = `translateY(${translateY}px)`;
+                            });
+                        });
+
+                    } else if (scrollAmountInHero > animationDistance) {
+                        requestAnimationFrame(() => { heroContentScaler.style.opacity = 0; });
+                    } else {
+                        requestAnimationFrame(() => {
+                            heroContentScaler.style.transform = 'scale(1)';
+                            heroContentScaler.style.opacity = 1;
+                            heroStickyContainer.style.backdropFilter = `blur(0px)`;
+                            heroStickyContainer.style.webkitBackdropFilter = `blur(0px)`;
+                            floatingWords.forEach(word => { word.style.opacity = 0; });
+                        });
+                    }
+                };
+                window.addEventListener('scroll', handleHeroScroll, { passive: true });
+                handleHeroScroll();
+            }
+
+            initThreadsAnimation();
+
+            // =================================================================
+            // --- MOBILE MENU LOGIC ---
+            // =================================================================
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+            const closeMobileMenuButton = document.getElementById('close-mobile-menu');
+            const mainContentForMenu = document.getElementById('main-content');
+
+            const openMenu = () => {
+                mobileMenuOverlay.classList.add('active');
+                mainContentForMenu.classList.add('blur-effect');
+                document.body.style.overflow = 'hidden';
+            };
+            const closeMenu = () => {
+                mobileMenuOverlay.classList.remove('active');
+                mainContentForMenu.classList.remove('blur-effect');
+                document.body.style.overflow = '';
+            };
+            mobileMenuButton.addEventListener('click', openMenu);
+            closeMobileMenuButton.addEventListener('click', closeMenu);
+            mobileMenuOverlay.addEventListener('click', (e) => {
+                if (e.target.tagName === 'A') closeMenu();
+            });
+
+            // =================================================================
+            // --- SMOOTH SCROLL & MODAL LOGIC ---
+            // =================================================================
+            document.querySelectorAll('a[href^="#"]').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetElement = document.querySelector(this.getAttribute('href'));
+                    if (targetElement) {
+                        const headerHeight = document.getElementById('main-header').offsetHeight;
+                        const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - headerHeight;
+                        window.scrollTo({ top: targetPosition, behavior: 'smooth' });
+                    }
+                });
+            });
+
+            const artModal = document.getElementById('art-modal');
+            // Select both desktop and mobile close buttons
+            const closeModalDesktopButton = document.getElementById('close-modal-desktop');
+            const closeModalMobileButton = document.getElementById('close-modal-mobile');
+            const mainContent = document.getElementById('main-content');
+            const modalContentWrapper = document.getElementById('modal-content-wrapper');
+
+            function closeArtModal() {
+                modalContentWrapper.classList.remove('modal-content-active');
+                modalContentWrapper.classList.add('modal-content-initial');
+                modalContentWrapper.addEventListener('transitionend', () => {
+                    artModal.classList.add('hidden');
+                    mainContent.classList.remove('blur-effect');
+                    document.body.style.overflow = ''; 
+                    // Restore default history behavior
+                    window.removeEventListener('popstate', handlePopState);
+                }, { once: true });
+            }
+
+            // Function to handle browser back button/gesture
+            function handlePopState(event) {
+                if (!artModal.classList.contains('hidden')) {
+                    closeArtModal();
+                    // Prevent default back behavior by pushing a new state
+                    history.pushState(null, null, window.location.pathname); 
+                }
+            }
+
+            // Add event listeners to both close buttons
+            if (closeModalDesktopButton) {
+                closeModalDesktopButton.addEventListener('click', closeArtModal);
+            }
+            if (closeModalMobileButton) {
+                closeModalMobileButton.addEventListener('click', closeArtModal);
+            }
+
+            artModal.addEventListener('click', (e) => { 
+                // Only close if the click is directly on the overlay, not the modal content itself
+                if (e.target === artModal) {
+                    closeArtModal(); 
+                }
+            });
+            document.addEventListener('keydown', (e) => { 
+                if (e.key === 'Escape' && !artModal.classList.contains('hidden')) {
+                    closeArtModal(); 
+                }
+            });
+
+            // Make openArtModal a global function to be accessible from main.js
+            window.openArtModal = (art) => {
+                if (art) {
+                    document.getElementById('modal-image').src = art.src;
+                    document.getElementById('modal-image').alt = art.alt;
+                    document.getElementById('modal-title').textContent = art.title;
+                    document.getElementById('modal-description').textContent = art.description;
+                    document.getElementById('modal-theme').textContent = `Theme: ${art.theme || 'N/A'}`;
+                    document.getElementById('modal-creation-date').textContent = `Creation Date: ${art.creationDate || 'N/A'}`;
+                    document.getElementById('modal-time-taken').textContent = `Time Taken: ${art.timeTaken || 'N/A'}`;
+                    document.getElementById('modal-app-used').textContent = `App Used: ${art.appUsed || 'N/A'}`;
+                    document.getElementById('modal-wacom').textContent = `Tablet: ${art.wacom || 'N/A'}`;
+                    document.getElementById('modal-dimensions').textContent = `Dimensions: ${art.dimensions}`;
+                    document.getElementById('modal-date').textContent = `Uploaded: ${new Date(art.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+                    
+                    const modalCategoriesContainer = document.getElementById('modal-categories');
+                    modalCategoriesContainer.innerHTML = '';
+                    art.categories.forEach(cat => {
+                        const categoryChip = document.createElement('span');
+                        categoryChip.className = 'bg-white/20 text-white text-sm font-medium px-3 py-1 rounded-full';
+                        const formattedCat = cat.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        categoryChip.textContent = formattedCat;
+                        modalCategoriesContainer.appendChild(categoryChip);
+                    });
+
+                    mainContent.classList.add('blur-effect');
+                    document.body.style.overflow = 'hidden';
+                    artModal.classList.remove('hidden');
+                    setTimeout(() => {
+                        modalContentWrapper.classList.remove('modal-content-initial');
+                        modalContentWrapper.classList.add('modal-content-active');
+                    }, 10);
+
+                    // Add a new state to history when modal opens
+                    history.pushState({ modalOpen: true }, null, window.location.pathname);
+                    window.addEventListener('popstate', handlePopState);
+                }
+            };
+        });
+
+        // --- Threads-like Animation for Contact Section ---
+        function initThreadsAnimation() {
+            const canvas = document.getElementById('contact-background-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const container = document.getElementById('contact');
+            let time = 0;
+            let intersectionRatio = 0;
+
+            function resizeCanvas() {
+                canvas.width = container.clientWidth * window.devicePixelRatio;
+                canvas.height = container.clientHeight * window.devicePixelRatio;
+                canvas.style.width = `${container.clientWidth}px`;
+                canvas.style.height = `${container.clientHeight}px`;
+                ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            }
+
+            function getPointOnBezier(p0, p1, p2, p3, t) {
+                const cX = 3 * (p1.x - p0.x);
+                const bX = 3 * (p2.x - p1.x) - cX;
+                const aX = p3.x - p0.x - cX - bX;
+                const cY = 3 * (p1.y - p0.y);
+                const bY = 3 * (p2.y - p1.y) - cY;
+                const aY = p3.y - p0.y - cY - bY;
+                const x = aX * t * t * t + bX * t * t + cX * t + p0.x;
+                const y = aY * t * t * t + bY * t * t + cY * t + p0.y;
+                return { x, y };
+            }
+
+            function getTangentOnBezier(p0, p1, p2, p3, t) {
+                const dx = 3 * (1 - t) * (1 - t) * (p1.x - p0.x) + 6 * (1 - t) * t * (p2.x - p1.x) + 3 * t * t * (p3.x - p2.x);
+                const dy = 3 * (1 - t) * (1 - t) * (p1.y - p0.y) + 6 * (1 - t) * t * (p2.y - p1.y) + 3 * t * t * (p3.y - p2.y) ;
+                return Math.atan2(dy, dx);
+            }
+
+            function drawThread(basePath, style, text, scrollOffset, globalXOffset, globalYOffset) {
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                const isMobile = width < 768;
+                const lineWidth = isMobile ? style.mobileLineWidth : style.lineWidth;
+
+                const path = basePath.map(p => ({
+                    x: (p.x + scrollOffset + globalXOffset) * width,
+                    y: (p.y + globalYOffset + (isMobile ? p.mobileYOffset || 0 : 0)) * height,
+                    cp1x: (p.cp1x + scrollOffset + globalXOffset) * width,
+                    cp1y: (p.cp1y + globalYOffset + (isMobile ? p.mobileYOffset || 0 : 0)) * height,
+                    cp2x: (p.cp2x + scrollOffset + globalXOffset) * width,
+                    cp2y: (p.cp2y + globalYOffset + (isMobile ? p.mobileYOffset || 0 : 0)) * height,
+                }));
+
+                ctx.beginPath();
+                ctx.moveTo(path[0].x, path[0].y);
+                for (let i = 1; i < path.length; i++) {
+                    ctx.bezierCurveTo(path[i].cp1x, path[i].cp1y, path[i].cp2x, path[i].cp2y, path[i].x, path[i].y);
+                }
+
+                ctx.lineWidth = lineWidth;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                if (style.isGradient) {
+                    const gradient = ctx.createLinearGradient(0, 0, width, 0);
+                    style.gradientStops.forEach(stop => gradient.addColorStop(stop.pos, stop.color));
+                    ctx.strokeStyle = gradient;
+                } else {
+                    ctx.strokeStyle = style.color;
+                }
+                ctx.stroke();
+
+                if (text && style.font) {
+                    drawTextOnPath(text, path, style, isMobile);
+                }
+            }
+
+            function drawTextOnPath(text, path, style, isMobile) {
+                const fontSize = isMobile ? style.mobileFontSize : style.fontSize;
+                ctx.font = `${style.fontWeight || 'bold'} ${fontSize}px ${style.fontFamily || 'Inter'}`;
+                ctx.fillStyle = style.textColor;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const textMetrics = ctx.measureText(text + " • ");
+                const measuredWidth = textMetrics.width;
+                if (measuredWidth <= 0) return;
+                const canvasWidth = ctx.canvas.width / window.devicePixelRatio;
+                const pathLengthApproximation = canvasWidth * 3.5;
+                const spacingMultiplier = isMobile ? 2.8 : 1.8;
+                const stepDistance = measuredWidth * spacingMultiplier;
+                if (stepDistance <= 0) return;
+                const startOffset = (time * 30 * style.speed) % stepDistance;
+                for (let d = -startOffset; d < pathLengthApproximation; d += stepDistance) {
+                    const t = d / pathLengthApproximation;
+                    if (t < 0 || t > 1) continue;
+                    const p0 = path[0];
+                    const p1 = { x: path[1].cp1x, y: path[1].cp1y };
+                    const p2 = { x: path[1].cp2x, y: path[1].cp2y };
+                    const p3 = { x: path[1].x, y: path[1].y };
+                    const point = getPointOnBezier(p0, p1, p2, p3, t);
+                    const angle = getTangentOnBezier(p0, p1, p2, p3, t);
+                    ctx.save();
+                    ctx.translate(point.x, point.y);
+                    ctx.rotate(angle);
+                    ctx.fillText(text, 0, 0);
+                    ctx.restore();
+                }
+            }
+            
+            const threadConfig = {
+                globalXOffset: 0.0,
+                globalYOffset: 0.105,
+                threads: [
+                    {
+                        text: "ART",
+                        style: { color: '#181818', lineWidth: 80, mobileLineWidth: 55, speed: -0.8, font: true, fontFamily: 'ArialGreek', fontSize: 32, mobileFontSize: 22, fontWeight: 800, textColor: '#FFFFFF' },
+                        path: [{ x: -0.8, y: 0.55, mobileYOffset: 0 }, { cp1x: -0.1, cp1y: 0.1, cp2x: 1.1, cp2y: 1.0, x: 1.8, y: 0.45, mobileYOffset: 0 }]
+                    },
+                    {
+                        text: "COLOURS",
+                        style: { isGradient: true, lineWidth: 80, mobileLineWidth: 55, speed: 1, gradientStops: [ { pos: 0, color: '#C13584' }, { pos: 0.25, color: '#FD1D1D' }, { pos: 0.5, color: '#F56040' }, { pos: 0.75, color: '#FFDC80' }, { pos: 1, color: '#FCAF45' } ], font: true, fontFamily: 'ArialGreek', fontSize: 32, mobileFontSize: 22, fontWeight: 800, textColor: '#FFFFFF' },
+                        path: [{ x: -0.8, y: 0.45, mobileYOffset: 0 }, { cp1x: -0.1, cp1y: 1.0, cp2x: 1.1, cp2y: 0.1, x: 1.8, y: 0.55, mobileYOffset: 0 }]
+                    },
+                    {
+                        text: "GRAPHICS",
+                        style: { color: '#181818', lineWidth: 80, mobileLineWidth: 55, speed: -0.8, font: true, fontFamily: 'ArialGreek', fontSize: 32, mobileFontSize: 22, fontWeight: 800, textColor: '#FFFFFF' },
+                        path: [{ x: 1.8, y: 0.65, mobileYOffset: 0.05 }, { cp1x: 1.1, cp1y: 1.1, cp2x: -0.1, cp2y: -0.2, x: -0.8, y: 0.35, mobileYOffset: 0.05 }]
+                    },
+                    {
+                        text: "LIFE",
+                         style: { color: '#181818', lineWidth: 80, mobileLineWidth: 55, speed: 1, font: true, fontFamily: 'ArialGreek', fontSize: 32, mobileFontSize: 22, fontWeight: 800, textColor: '#FFFFFF' },
+                        path: [{ x: 1.8, y: 0.35, mobileYOffset: -0.05 }, { cp1x: 1.1, cp1y: -0.2, cp2x: -0.1, cp2y: 1.1, x: -0.8, y: 0.65, mobileYOffset: -0.05 }]
+                    }
+                ]
+            };
+
+            function animate() {
+                time += 0.005;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.globalAlpha = intersectionRatio * intersectionRatio;
+                const scrollOffset = (1 - intersectionRatio) * 0.5;
+                const drawOrder = [0, 2, 3, 1];
+                drawOrder.forEach(index => {
+                    const thread = threadConfig.threads[index];
+                    drawThread( thread.path, thread.style, thread.text, scrollOffset * (thread.path[0].x < 0.5 ? -1 : 1), threadConfig.globalXOffset, threadConfig.globalYOffset );
+                });
+                requestAnimationFrame(animate);
+            }
+
+            const observer = new IntersectionObserver( (entries) => { entries.forEach(entry => { intersectionRatio = entry.intersectionRatio; }); }, { threshold: Array.from(Array(101).keys(), i => i / 100) } );
+            observer.observe(container);
+            window.addEventListener('resize', resizeCanvas, false);
+            resizeCanvas();
+            animate();
+        }
+    </script>
+    <script src="main.js"></script>
+</body>
+</html>
