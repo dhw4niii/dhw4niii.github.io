@@ -31,6 +31,20 @@ document.addEventListener('DOMContentLoaded', () => {
             timeTaken: '1hr 17 min',
             appUsed: 'ibis paint x',
             wacom: 'xp-pen STAR 03 V2'
+        },
+        {
+            id: 'art3',
+            src: 'art/her_emerald_eyes.png',
+            alt: 'her emerald eyes',
+            title: 'her emerald eyes',
+            date: '2025-07-25',
+            categories: ['colored', 'portraits'],
+            description: 'Her emerald eyes held galaxies of secrets - each blink a shimmer of mystery.',
+            theme: 'Pencil Art',
+            creationDate: 'July 25th, 2025',
+            timeTaken: '1hr 52 min',
+            appUsed: 'ibis paint x',
+            wacom: 'xp-pen STAR 03 V2'
         }
     ];
 
