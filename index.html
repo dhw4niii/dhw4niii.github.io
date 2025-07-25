@@ -534,6 +534,56 @@
         .text-glow {
             text-shadow: 0 0 10px rgba(255, 255, 255, 0.6), 0 0 20px rgba(255, 255, 255, 0.4);
         }
+
+        /* Toast Notification Styles */
+        #toast-notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(30, 30, 30, 0.9);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+            z-index: 1000;
+            font-size: 0.9rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        #toast-notification.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Highlight for shared art card - "Light Leak" Effect  */
+        .highlight-art-card {
+            box-shadow: 0 0 0 0 rgba(200, 160, 255, 0), inset 0 0 0 0 rgba(255, 255, 255, 0); /* Base */
+            transition: box-shadow 0.4s ease-in-out;
+            animation: pulse-highlight-light-leak 2.8s infinite alternate; /* Slightly slower for more ethereal feel */
+        }
+
+        @keyframes pulse-highlight-light-leak {
+            0% {
+                box-shadow:
+                    0 0 0 0px rgba(255, 255, 255, 0),
+                    0 0 0 0px rgba(200, 160, 255, 0);
+            }
+            50% {
+                box-shadow:
+                    0 0 0 10px rgba(255, 255, 255, 0.08), /* Very subtle outer white haze */
+                    0 0 30px 15px rgba(200, 160, 255, 0.35); /* Expanding soft purple glow */
+            }
+            100% {
+                box-shadow:
+                    0 0 0 0px rgba(255, 255, 255, 0),
+                    0 0 0 0px rgba(200, 160, 255, 0);
+            }
+        }
     </style>
 </head>
 <body class="text-gray-100 antialiased">
@@ -685,6 +735,9 @@
         <!-- Close button for Mobile - placed outside modal-content-wrapper -->
         <button id="close-modal-mobile" class="mobile-modal-close-button block md:hidden">Close</button>
     </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-notification" class="toast-notification"></div>
 
     <!-- Main Site Scripts -->
     <script>
