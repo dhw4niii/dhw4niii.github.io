@@ -373,6 +373,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         targetElement.classList.add('highlight-art-card');
                         setTimeout(() => {
                             targetElement.classList.remove('highlight-art-card');
+                            // FIX: Remove the hash from the URL after processing to prevent re-triggering on refresh
+                            history.replaceState(null, null, window.location.pathname);
                         }, 3000); // Remove highlight after 3 seconds
                     }, 500); // Adjust delay as needed
                 }
