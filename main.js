@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (navigator.share) {
             navigator.share({
                 title: 'Dhanista\'s Art',
-                text: shareText,
+                text: `${dynamicPhrase} "${art.title}" by Dhanishta's Art:`, // FIX: Removed the URL from the text property to prevent duplication on mobile.
                 url: shareUrl
             }).catch((error) => {
                 // User cancelled share or other error
